@@ -84,6 +84,15 @@ declare class Zoro extends AnimeParser {
     fetchSchedule(date?: string): Promise<ISearch<IAnimeResult>>;
     fetchSpotlight(): Promise<ISearch<IAnimeResult>>;
     fetchSearchSuggestions(query: string): Promise<ISearch<IAnimeResult>>;
+    private editDistance;
+    private similarity;
+    /**
+     *Fetches the provider id from anilist id
+     *@returns A promise that resolved to the provider id
+     */
+    fetchIdFromAnilistId(id: string): Promise<{
+        id: string;
+    }>;
     /**
      * Fetches the list of episodes that the user is currently watching.
      * @param connectSid The session ID of the user. Note: This can be obtained from the browser cookies (needs to be signed in)

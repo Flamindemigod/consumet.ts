@@ -16,6 +16,9 @@ import {
 
 import { StreamSB, RapidCloud, MegaCloud, StreamTape } from '../../utils';
 import { USER_AGENT } from '../../utils';
+import Anilist from '../meta/anilist';
+
+const anilist = new Anilist();
 
 class Zoro extends AnimeParser {
   override readonly name = 'Zoro';
@@ -331,6 +334,76 @@ class Zoro extends AnimeParser {
     }
   }
 
+  private editDistance(s1: string, s2: string): number {
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
+
+    var costs: number[] = new Array();
+
+    for (var i = 0; i <= s1.length; i++) {
+      var lastValue = i;
+      for (var j = 0; j <= s2.length; j++) {
+        if (i == 0) costs[j] = j;
+        else {
+          if (j > 0) {
+            var newValue = costs[j - 1];
+            if (s1.charAt(i - 1) != s2.charAt(j - 1))
+              newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+            costs[j - 1] = lastValue;
+            lastValue = newValue;
+          }
+        }
+      }
+      if (i > 0) costs[s2.length] = lastValue;
+    }
+    return costs[s2.length];
+  }
+  private similarity(s1: string, s2: string): number {
+    var longer = s1;
+    var shorter = s2;
+    if (s1.length < s2.length) {
+      longer = s2;
+      shorter = s1;
+    }
+    var longerLength = longer.length;
+    if (longerLength == 0) {
+      return 1.0;
+    }
+    return (longerLength - this.editDistance(longer, shorter)) / longerLength;
+  }
+
+  /**
+   *Fetches the provider id from anilist id
+   *@returns A promise that resolved to the provider id
+   */
+  async fetchIdFromAnilistId(id: string): Promise<{ id: string }> {
+    try {
+      const info = await anilist.fetchAnimeInfo(id);
+      const titles = [...Object.values(info.title), ...(info.synonyms ?? [])];
+      let searchSet = new Map();
+      let promises: Promise<any>[] = [];
+      for (const title of titles) {
+        promises.push(this.search(title).then(v => v.results));
+      }
+      const data = (await Promise.all(promises)).flat();
+
+      for (const res of data) {
+        searchSet.set(res.id, res);
+      }
+
+      const out = [...searchSet.values()]
+        .map((v: any) => ({
+          id: v.id,
+          title: v.title,
+          similarity: Math.max(...titles.map(t => this.similarity(t, v.title))),
+        }))
+        .sort((a, b) => b.similarity - a.similarity)
+        .splice(0, 10);
+      return { id: out.at(0)!.id };
+    } catch (err) {
+      throw new Error((err as Error).message);
+    }
+  }
   /**
    * Fetches the list of episodes that the user is currently watching.
    * @param connectSid The session ID of the user. Note: This can be obtained from the browser cookies (needs to be signed in)
@@ -480,6 +553,7 @@ class Zoro extends AnimeParser {
     episodeId: string,
     server: StreamingServers = StreamingServers.VidCloud
   ): Promise<ISource> => {
+    console.log(episodeId);
     if (episodeId.startsWith('http')) {
       const serverUrl = new URL(episodeId);
       switch (server) {
@@ -590,9 +664,9 @@ class Zoro extends AnimeParser {
   private retrieveServerId = ($: any, index: number, subOrDub: 'sub' | 'dub') => {
     const rawOrSubOrDub = (raw: boolean) =>
       $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
-          .map((i: any, el: any) => ($(el).attr('data-server-id') == `${index}` ? $(el) : null))
-          .get()[0]
-          .attr('data-id');
+        .map((i: any, el: any) => ($(el).attr('data-server-id') == `${index}` ? $(el) : null))
+        .get()[0]
+        .attr('data-id');
     try {
       // Attempt to get the subOrDub ID
       return rawOrSubOrDub(false);

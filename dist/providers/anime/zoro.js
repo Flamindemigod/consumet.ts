@@ -1,9 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const cheerio_1 = require("cheerio");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const utils_2 = require("../../utils");
+const anilist_1 = __importDefault(require("../meta/anilist"));
+const anilist = new anilist_1.default();
 class Zoro extends models_1.AnimeParser {
     constructor(customBaseURL) {
         super(...arguments);
@@ -101,6 +106,7 @@ class Zoro extends models_1.AnimeParser {
          */
         this.fetchEpisodeSources = async (episodeId, server = models_1.StreamingServers.VidCloud) => {
             var _a;
+            console.log(episodeId);
             if (episodeId.startsWith('http')) {
                 const serverUrl = new URL(episodeId);
                 switch (server) {
@@ -582,6 +588,75 @@ class Zoro extends models_1.AnimeParser {
         }
         catch (error) {
             throw new Error('Something went wrong. Please try again later.');
+        }
+    }
+    editDistance(s1, s2) {
+        s1 = s1.toLowerCase();
+        s2 = s2.toLowerCase();
+        var costs = new Array();
+        for (var i = 0; i <= s1.length; i++) {
+            var lastValue = i;
+            for (var j = 0; j <= s2.length; j++) {
+                if (i == 0)
+                    costs[j] = j;
+                else {
+                    if (j > 0) {
+                        var newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+            }
+            if (i > 0)
+                costs[s2.length] = lastValue;
+        }
+        return costs[s2.length];
+    }
+    similarity(s1, s2) {
+        var longer = s1;
+        var shorter = s2;
+        if (s1.length < s2.length) {
+            longer = s2;
+            shorter = s1;
+        }
+        var longerLength = longer.length;
+        if (longerLength == 0) {
+            return 1.0;
+        }
+        return (longerLength - this.editDistance(longer, shorter)) / longerLength;
+    }
+    /**
+     *Fetches the provider id from anilist id
+     *@returns A promise that resolved to the provider id
+     */
+    async fetchIdFromAnilistId(id) {
+        var _a;
+        try {
+            const info = await anilist.fetchAnimeInfo(id);
+            const titles = [...Object.values(info.title), ...((_a = info.synonyms) !== null && _a !== void 0 ? _a : [])];
+            let searchSet = new Map();
+            let promises = [];
+            for (const title of titles) {
+                promises.push(this.search(title).then(v => v.results));
+            }
+            const data = (await Promise.all(promises)).flat();
+            for (const res of data) {
+                searchSet.set(res.id, res);
+            }
+            const out = [...searchSet.values()]
+                .map((v) => ({
+                id: v.id,
+                title: v.title,
+                similarity: Math.max(...titles.map(t => this.similarity(t, v.title))),
+            }))
+                .sort((a, b) => b.similarity - a.similarity)
+                .splice(0, 10);
+            return { id: out.at(0).id };
+        }
+        catch (err) {
+            throw new Error(err.message);
         }
     }
     /**
