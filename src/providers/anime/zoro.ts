@@ -620,13 +620,11 @@ class Zoro extends AnimeParser {
             serverId = this.retrieveServerId($, 4, subOrDub);
 
             // zoro's vidcloud server is rapidcloud
-            if (!serverId) throw new Error('vidtreaming not found');
-            break;
+            if (!!serverId) break;
           case StreamingServers.StreamSB:
             serverId = this.retrieveServerId($, 5, subOrDub);
 
-            if (!serverId) throw new Error('StreamSB not found');
-            break;
+            if (!!serverId) break;
           case StreamingServers.StreamTape:
             serverId = this.retrieveServerId($, 3, subOrDub);
 

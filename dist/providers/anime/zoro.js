@@ -165,14 +165,12 @@ class Zoro extends models_1.AnimeParser {
                         case models_1.StreamingServers.VidStreaming:
                             serverId = this.retrieveServerId($, 4, subOrDub);
                             // zoro's vidcloud server is rapidcloud
-                            if (!serverId)
-                                throw new Error('vidtreaming not found');
-                            break;
+                            if (!!serverId)
+                                break;
                         case models_1.StreamingServers.StreamSB:
                             serverId = this.retrieveServerId($, 5, subOrDub);
-                            if (!serverId)
-                                throw new Error('StreamSB not found');
-                            break;
+                            if (!!serverId)
+                                break;
                         case models_1.StreamingServers.StreamTape:
                             serverId = this.retrieveServerId($, 3, subOrDub);
                             if (!serverId)
