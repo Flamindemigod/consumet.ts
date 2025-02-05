@@ -12,7 +12,7 @@
     "test": "jest",
     "test:anime": "jest ./test/anime",
     "test:anime:anix": "jest ./test/anime/anix.test.ts",
-    "test:scratch": "jest ./test/scratch.test.ts",
+    "test:scratch": "jest --runInBand ./test/scratch.test.ts",
     "test:books": "jest ./test/books/libgen.test.ts",
     "test:comics": "jest ./test/comics",
     "test:movies": "jest ./test/movies",
@@ -30,7 +30,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/consumet/consumet.ts.git"
+    "url": "git+https://github.com/flamindemigod/consumet.ts.git"
   },
   "keywords": [
     "consumet",

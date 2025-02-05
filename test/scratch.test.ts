@@ -69,9 +69,26 @@ const TestCases: { desc: string; input: number; output: string }[] = [
   },
 ];
 
-for (const testcase of TestCases) {
+//for (const testcase of TestCases) {
+//  test(testcase.desc, async () => {
+//    const res = await zoro.fetchIdFromAnilistId(`${testcase.input}`);
+//    expect(res.id).toEqual(testcase.output);
+//  });
+//}
+
+const EpisodeTestCases: { desc: string; input: string; output: string }[] = [
+  {
+    desc: 'Episode 2 of i may be a guild receptionist but ill solo any boss to clock out on time',
+    input:
+      'i-may-be-a-guild-receptionist-but-ill-solo-any-boss-to-clock-out-on-time-19441$episode$131985$dub',
+    output: '',
+  },
+];
+
+for (const testcase of EpisodeTestCases) {
   test(testcase.desc, async () => {
-    const res = await zoro.fetchIdFromAnilistId(`${testcase.input}`);
-    expect(res.id).toEqual(testcase.output);
+    debugger;
+    const res = await zoro.fetchEpisodeSources(testcase.input);
+    expect(res.sources).toEqual(testcase.output);
   });
 }
