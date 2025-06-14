@@ -520,21 +520,23 @@ class Zoro extends AnimeParser {
       info.totalEpisodes = $$('div.detail-infor-content > div > a').length;
       info.episodes = [];
       $$('div.detail-infor-content > div > a').each((i, el) => {
-        const episodeId = $$(el)
-          .attr('href')
-          ?.split('/')[2]
-          ?.replace('?ep=', '$episode$')
-          ?.concat(`$${info.subOrDub}`)!;
+        const episodeId = $$(el).attr('href')?.split('/')[2]?.replace('?ep=', '$episode$')!;
         const number = parseInt($$(el).attr('data-number')!);
         const title = $$(el).attr('title');
         const url = this.baseUrl + $$(el).attr('href');
         const isFiller = $$(el).hasClass('ssl-item-filler');
+        const isSubbed =
+          number <= (parseInt($('div.film-stats div.tick div.tick-item.tick-sub').text().trim()) || 0);
+        const isDubbed =
+          number <= (parseInt($('div.film-stats div.tick div.tick-item.tick-dub').text().trim()) || 0);
 
         info.episodes?.push({
           id: episodeId,
           number: number,
           title: title,
           isFiller: isFiller,
+          isSubbed: isSubbed,
+          isDubbed: isDubbed,
           url: url,
         });
       });
@@ -548,10 +550,13 @@ class Zoro extends AnimeParser {
   /**
    *
    * @param episodeId Episode id
+   * @param server server type (default `VidCloud`) (optional)
+   * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
    */
   override fetchEpisodeSources = async (
     episodeId: string,
-    server: StreamingServers = StreamingServers.VidCloud
+    server: StreamingServers = StreamingServers.VidCloud,
+    subOrDub: SubOrSub = SubOrSub.SUB
   ): Promise<ISource> => {
     console.log(episodeId);
     if (episodeId.startsWith('http')) {
@@ -560,7 +565,8 @@ class Zoro extends AnimeParser {
         case StreamingServers.VidStreaming:
         case StreamingServers.VidCloud:
           return {
-            ...(await new MegaCloud().extract(serverUrl)),
+            headers: { Referer: serverUrl.href },
+            ...(await new MegaCloud().extract(serverUrl, this.baseUrl)),
           };
         case StreamingServers.StreamSB:
           return {
@@ -580,16 +586,17 @@ class Zoro extends AnimeParser {
         case StreamingServers.VidCloud:
           return {
             headers: { Referer: serverUrl.href },
-            ...(await new MegaCloud().extract(serverUrl)),
+            ...(await new MegaCloud().extract(serverUrl, this.baseUrl)),
           };
       }
     }
     if (!episodeId.includes('$episode$')) throw new Error('Invalid episode id');
 
+    // keeping this for future use
     // Fallback to using sub if no info found in case of compatibility
 
     // TODO: add both options later
-    const subOrDub: 'sub' | 'dub' = episodeId.split('$')?.pop() === 'dub' ? 'dub' : 'sub';
+    // subOrDub = episodeId.split('$')?.pop() === 'dub' ? 'dub' : 'sub';
 
     episodeId = `${this.baseUrl}/watch/${episodeId
       .replace('$episode$', '?ep=')
@@ -639,7 +646,7 @@ class Zoro extends AnimeParser {
         data: { link },
       } = await this.client.get(`${this.baseUrl}/ajax/v2/episode/sources?id=${serverId}`);
 
-      return await this.fetchEpisodeSources(link, server);
+      return await this.fetchEpisodeSources(link, server, SubOrSub.SUB);
     } catch (err) {
       throw err;
     }
@@ -658,17 +665,12 @@ class Zoro extends AnimeParser {
     }
   };
 
-  private retrieveServerId = ($: any, index: number, subOrDub: 'sub' | 'dub') => {
-    const rawOrSubOrDub = (raw: boolean) => {
-      try {
-        return $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
-          .map((i: any, el: any) => ($(el).attr('data-server-id') == `${index}` ? $(el) : null))
-          .get()[0]
-          .attr('data-id');
-      } catch {
-        return null;
-      }
-    };
+  private retrieveServerId = ($: any, index: number, subOrDub: SubOrSub) => {
+    const rawOrSubOrDub = (raw: boolean) =>
+      $(`.ps_-block.ps_-block-sub.servers-${raw ? 'raw' : subOrDub} > .ps__-list .server-item`)
+        .map((i: any, el: any) => ($(el).attr('data-server-id') == `${index}` ? $(el) : null))
+        .get()[0]
+        .attr('data-id');
     try {
       // Attempt to get the subOrDub ID
       return rawOrSubOrDub(false);
@@ -682,7 +684,7 @@ class Zoro extends AnimeParser {
   /**
    * @param url string
    */
-  private scrapeCardPage = async (url: string): Promise<ISearch<IAnimeResult>> => {
+  private scrapeCardPage = async (url: string, headers?: object): Promise<ISearch<IAnimeResult>> => {
     try {
       const res: ISearch<IAnimeResult> = {
         currentPage: 0,
@@ -690,7 +692,7 @@ class Zoro extends AnimeParser {
         totalPages: 0,
         results: [],
       };
-      const { data } = await this.client.get(url);
+      const { data } = await this.client.get(url, headers);
       const $ = load(data);
 
       const pagination = $('ul.pagination');
@@ -767,8 +769,11 @@ class Zoro extends AnimeParser {
 //   const zoro = new Zoro();
 //   const anime = await zoro.search('Dandadan');
 //   const info = await zoro.fetchAnimeInfo(anime.results[0].id);
-//   console.log(info.episodes)
-//   const sources = await zoro.fetchEpisodeSources(info.episodes![0].id);
+//   const sources = await zoro.fetchEpisodeSources(
+//     info.episodes![0].id,
+//     StreamingServers.VidCloud,
+//     SubOrSub.DUB
+//   );
 //   console.log(sources);
 // })();
 

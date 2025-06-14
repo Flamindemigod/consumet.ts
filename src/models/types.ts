@@ -29,6 +29,7 @@ export interface IAnimeResult {
   rating?: number;
   type?: MediaFormat;
   releaseDate?: string;
+  relationType?: string;
   [x: string]: any; // other fields
 }
 
@@ -55,6 +56,12 @@ export interface FuzzyDate {
   year?: number;
   month?: number;
   day?: number;
+}
+
+export interface ExternalLink {
+  id?: string;
+  url?: string;
+  sourceName?: string;
 }
 
 export enum MediaFormat {
@@ -99,6 +106,7 @@ export interface IAnimeInfo extends IAnimeResult {
   studios?: string[];
   color?: string;
   cover?: string;
+  externalLinks?: ExternalLink[];
   trailer?: Trailer;
   episodes?: IAnimeEpisode[];
   startDate?: FuzzyDate;
@@ -130,6 +138,8 @@ export interface IAnimeEpisode {
   title?: string;
   description?: string;
   isFiller?: boolean;
+  isSubbed?: boolean;
+  isDubbed?: boolean;
   url?: string;
   image?: string;
   imageHash?: string;
@@ -140,6 +150,7 @@ export interface IAnimeEpisode {
 export interface IEpisodeServer {
   name: string;
   url: string;
+  [x: string]: unknown;
 }
 
 export interface IVideo {
@@ -187,6 +198,8 @@ export enum StreamingServers {
   VidHide = 'vidhide',
   VidMoly = 'vidmoly',
   Voe = 'voe',
+  MegaUp = 'megaup',
+  MegaCloud = 'megacloud',
 }
 
 export enum MediaStatus {
@@ -196,6 +209,15 @@ export enum MediaStatus {
   CANCELLED = 'Cancelled',
   NOT_YET_AIRED = 'Not yet aired',
   UNKNOWN = 'Unknown',
+}
+
+export enum WatchListType {
+  WATCHING = 'watching',
+  ONHOLD = 'on-hold',
+  PLAN_TO_WATCH = 'plan to watch',
+  DROPPED = 'dropped',
+  COMPLETED = 'completed',
+  NONE = 'none',
 }
 
 export enum SubOrSub {
@@ -337,7 +359,7 @@ export interface ISource {
   outro?: Intro;
   subtitles?: ISubtitle[];
   sources: IVideo[];
-  download?: string;
+  download?: string | { url?: string; quality?: string }[];
   embedURL?: string;
 }
 

@@ -4,11 +4,8 @@ import { decoded_png } from './megacloud.decodedpng';
 import util from 'util';
 import CryptoJS from 'crypto-js';
 import { webcrypto } from 'crypto';
-import type { extractedSources } from './index';
 import { USER_AGENT } from '../../utils/utils';
 
-const embed_url = 'https://megacloud.tv/embed-2/e-1/';
-const referrer = 'https://hianime.to';
 const user_agent = USER_AGENT;
 
 const crypto = webcrypto as unknown as Crypto;
@@ -16,6 +13,7 @@ let wasm: any;
 let arr = new Array(128).fill(void 0);
 let dateNow = Date.now();
 let content: string = '';
+let referer = '';
 
 function isDetached(buffer: ArrayBuffer): boolean {
   if (buffer.byteLength === 0) {
@@ -620,15 +618,13 @@ function assignWasm(resp: any) {
 }
 
 function QZ(QP: any) {
-  let Qn: any;
+  let Qn;
   return void 0 !== wasm
     ? wasm
     : ((Qn = initWasm()),
       QP instanceof WebAssembly.Module || (QP = new WebAssembly.Module(QP)),
       assignWasm(new WebAssembly.Instance(QP, Qn)));
 }
-
-// todo!
 async function loadWasm(url: any) {
   const mod = initWasm();
   const response = fetch(url, {
@@ -637,8 +633,8 @@ async function loadWasm(url: any) {
       Host: 'megacloud.tv',
     },
   });
-
   // Process the fetched binary with QN
+  // @ts-ignore
   const { instance, bytes } = await QN(await response, mod);
   assignWasm(instance);
   return bytes;
@@ -652,30 +648,6 @@ const grootLoader = {
 
 let wasmLoader = Object.assign(loadWasm, { initSync: QZ }, grootLoader);
 
-// @ts-ignore
-const Z = (z: string, Q0: string) => {
-  try {
-    var Q1 = CryptoJS.AES.decrypt(z, Q0);
-    return JSON.parse(Q1.toString(CryptoJS.enc.Utf8));
-  } catch (Q2: any) {}
-  return [];
-};
-// @ts-ignore
-const R = (z: Uint8Array, Q0: Array<number>) => {
-  try {
-    for (let Q1 = 0; Q1 < z.length; Q1++) {
-      z[Q1] = z[Q1] ^ Q0[Q1 % Q0.length];
-    }
-  } catch (Q2) {
-    return null;
-  }
-};
-
-// @ts-ignore
-function r(z: number) {
-  return [(4278190080 & z) >> 24, (16711680 & z) >> 16, (65280 & z) >> 8, 255 & z];
-}
-
 const V = async () => {
   try {
     let Q0 = await wasmLoader('https://megacloud.tv/images/loading.png?v=0.0.9');
@@ -688,21 +660,21 @@ const V = async () => {
     fake_window.error = true;
   }
 };
-
-const getMeta = async (url: string) => {
+const getMeta = async (url: string, site: string) => {
+  var _a;
   let resp = await fetch(url, {
     headers: {
-      UserAgent: user_agent,
-      Referrer: referrer,
+      UserAgent:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
+      Referrer: site,
     },
   });
   let txt = await resp.text();
   let regx = /name="j_crt" content="[A-Za-z0-9]*/g;
-  let match = txt.match(regx)?.[0];
-  let content = match?.slice(match.lastIndexOf('"') + 1);
+  let match = (_a = txt.match(regx)) === null || _a === void 0 ? void 0 : _a[0];
+  let content = match === null || match === void 0 ? void 0 : match.slice(match.lastIndexOf('"') + 1);
   meta.content = content + '==';
 };
-
 const i = (a: Uint8Array, P: Array<number>) => {
   try {
     for (let Q0 = 0; Q0 < a.length; Q0++) {
@@ -723,47 +695,81 @@ const M = (a: any, P: any) => {
   }
   return [];
 };
-
 function z(a: any) {
   return [(a & 4278190080) >> 24, (a & 16711680) >> 16, (a & 65280) >> 8, a & 255];
 }
 
-export async function getSources(xrax: string) {
-  await getMeta(embed_url + xrax + '?k=1');
+function transformURL(url: string) {
+  const regex = /\/(embed-\d+)\/(e-\d+)\//;
+  const match = url.match(regex);
+  if (match) {
+    const [, embedPart, ePart] = match;
+    return `/${embedPart}/ajax/${ePart}`;
+  }
+  return null;
+}
+
+export async function getSources(embed_url: string, site: string) {
+  await getMeta(embed_url, site);
+  let xrax = embed_url.split('/').pop()?.split('?').shift();
+  let regx = /https:\/\/[a-zA-Z0-9.]*/;
+  let base_url = embed_url.match(regx)?.[0];
+  let test = embed_url.split('/');
   fake_window.xrax = xrax;
   fake_window.G = xrax;
-  canvas.baseUrl = embed_url + xrax + '?k=1';
-  fake_window.location.href = embed_url + xrax + '?k=1';
-
+  canvas.baseUrl = embed_url;
+  fake_window.location.href = embed_url;
   let browser_version = 1878522368;
-  let res = {} as extractedSources;
 
   try {
     await V();
+    let getSourcesUrl = '';
 
-    let getSourcesUrl =
-      'https://megacloud.tv/embed-2/ajax/e-1/getSources?id=' +
-      fake_window.pid +
-      '&v=' +
-      fake_window.localStorage.kversion +
-      '&h=' +
-      fake_window.localStorage.kid +
-      '&b=' +
-      browser_version;
-
+    if (base_url!.includes('mega')) {
+      getSourcesUrl =
+        base_url +
+        '/' +
+        test[3] +
+        '/ajax/' +
+        test[4] +
+        '/getSources?id=' +
+        fake_window.pid +
+        '&v=' +
+        fake_window.localStorage.kversion +
+        '&h=' +
+        fake_window.localStorage.kid +
+        '&b=' +
+        browser_version;
+    } else {
+      getSourcesUrl =
+        base_url +
+        '/ajax/' +
+        test[3] +
+        '/' +
+        test[4] +
+        '/getSources?id=' +
+        fake_window.pid +
+        '&v=' +
+        fake_window.localStorage.kversion +
+        '&h=' +
+        fake_window.localStorage.kid +
+        '&b=' +
+        browser_version;
+    }
+    // console.log('getSourcesUrl: ', getSourcesUrl);
     let resp_json = await (
       await fetch(getSourcesUrl, {
         headers: {
-          'User-Agent': user_agent,
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
           //"Referrer": fake_window.origin + "/v2/embed-4/" + xrax + "?z=",
-          Referer: embed_url + xrax + '?k=1',
-          'X-Reuested-With': 'XMLHttpRequest',
+          Referer: site,
+          'X-Requested-With': 'XMLHttpRequest',
         },
         method: 'GET',
         mode: 'cors',
       })
     ).json();
-
     //let encrypted = resp_json.sources;
     let Q3 = fake_window.localStorage.kversion;
     let Q1 = z(Q3);
@@ -771,15 +777,13 @@ export async function getSources(xrax: string) {
     Q5 = new Uint8Array(Q5);
     let Q8: any;
     Q8 = resp_json.t != 0 ? (i(Q5, Q1), Q5) : ((Q8 = resp_json.k), i(Q8, Q1), Q8);
-
-    res = resp_json as extractedSources;
     // @ts-ignore
     const str = btoa(String.fromCharCode.apply(null, new Uint8Array(Q8)));
 
     // @ts-ignore
-    res.sources = M(res.sources, str) as extractedSources[];
+    resp_json.sources = M(resp_json.sources, str) as extractedSources[];
 
-    return res;
+    return resp_json;
   } catch (err) {
     console.error(err);
   }

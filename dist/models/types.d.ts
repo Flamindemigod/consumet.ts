@@ -26,6 +26,7 @@ export interface IAnimeResult {
     rating?: number;
     type?: MediaFormat;
     releaseDate?: string;
+    relationType?: string;
     [x: string]: any;
 }
 export interface ISearch<T> {
@@ -49,6 +50,11 @@ export interface FuzzyDate {
     year?: number;
     month?: number;
     day?: number;
+}
+export interface ExternalLink {
+    id?: string;
+    url?: string;
+    sourceName?: string;
 }
 export declare enum MediaFormat {
     TV = "TV",
@@ -91,6 +97,7 @@ export interface IAnimeInfo extends IAnimeResult {
     studios?: string[];
     color?: string;
     cover?: string;
+    externalLinks?: ExternalLink[];
     trailer?: Trailer;
     episodes?: IAnimeEpisode[];
     startDate?: FuzzyDate;
@@ -120,6 +127,8 @@ export interface IAnimeEpisode {
     title?: string;
     description?: string;
     isFiller?: boolean;
+    isSubbed?: boolean;
+    isDubbed?: boolean;
     url?: string;
     image?: string;
     imageHash?: string;
@@ -129,6 +138,7 @@ export interface IAnimeEpisode {
 export interface IEpisodeServer {
     name: string;
     url: string;
+    [x: string]: unknown;
 }
 export interface IVideo {
     /**
@@ -172,7 +182,9 @@ export declare enum StreamingServers {
     StreamWish = "streamwish",
     VidHide = "vidhide",
     VidMoly = "vidmoly",
-    Voe = "voe"
+    Voe = "voe",
+    MegaUp = "megaup",
+    MegaCloud = "megacloud"
 }
 export declare enum MediaStatus {
     ONGOING = "Ongoing",
@@ -181,6 +193,14 @@ export declare enum MediaStatus {
     CANCELLED = "Cancelled",
     NOT_YET_AIRED = "Not yet aired",
     UNKNOWN = "Unknown"
+}
+export declare enum WatchListType {
+    WATCHING = "watching",
+    ONHOLD = "on-hold",
+    PLAN_TO_WATCH = "plan to watch",
+    DROPPED = "dropped",
+    COMPLETED = "completed",
+    NONE = "none"
 }
 export declare enum SubOrSub {
     SUB = "sub",
@@ -310,7 +330,10 @@ export interface ISource {
     outro?: Intro;
     subtitles?: ISubtitle[];
     sources: IVideo[];
-    download?: string;
+    download?: string | {
+        url?: string;
+        quality?: string;
+    }[];
     embedURL?: string;
 }
 /**

@@ -13,7 +13,7 @@ import {
 } from '../../models';
 import { IPeopleResult } from '../../models/types';
 import { compareTwoStrings } from '../../utils';
-import FlixHQ from '../movies/flixhq';
+import HiMovies from '../movies/himovies';
 import { AxiosAdapter } from 'axios';
 
 class TMDB extends MovieParser {
@@ -33,7 +33,7 @@ class TMDB extends MovieParser {
     adapter?: AxiosAdapter
   ) {
     super(proxyConfig, adapter);
-    this.provider = provider || new FlixHQ();
+    this.provider = provider || new HiMovies();
   }
 
   /**
@@ -408,7 +408,7 @@ class TMDB extends MovieParser {
     // if extraData contains a year, filter out the results that don't match the year
     if (extraData && extraData.year && extraData.type === TvType.MOVIE) {
       findMedia.results = findMedia.results.filter(result => {
-        return result.releaseDate?.split('-')[0] === extraData.year;
+        return String(result.releaseDate).split('-')[0].trim() === String(extraData.year).trim();
       });
     }
 
@@ -448,9 +448,9 @@ class TMDB extends MovieParser {
 
 // (async () => {
 //   const tmdb = new TMDB();
-//   const search = await tmdb.search('the flash');
+//   const search = await tmdb.search('jujutsu');
 //   const info = await tmdb.fetchMediaInfo(search.results[0].id, search.results![0].type as string);
-//   // console.log(info);
+//   console.log(info.seasons[0].episodes);
 // })();
 
 export default TMDB;

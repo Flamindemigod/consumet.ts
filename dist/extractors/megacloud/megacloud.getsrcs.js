@@ -10,14 +10,13 @@ const util_1 = __importDefault(require("util"));
 const crypto_js_1 = __importDefault(require("crypto-js"));
 const crypto_1 = require("crypto");
 const utils_1 = require("../../utils/utils");
-const embed_url = 'https://megacloud.tv/embed-2/e-1/';
-const referrer = 'https://hianime.to';
 const user_agent = utils_1.USER_AGENT;
 const crypto = crypto_1.webcrypto;
 let wasm;
 let arr = new Array(128).fill(void 0);
 let dateNow = Date.now();
 let content = '';
+let referer = '';
 function isDetached(buffer) {
     if (buffer.byteLength === 0) {
         const formatted = util_1.default.format(buffer);
@@ -576,7 +575,6 @@ function QZ(QP) {
             QP instanceof WebAssembly.Module || (QP = new WebAssembly.Module(QP)),
             assignWasm(new WebAssembly.Instance(QP, Qn)));
 }
-// todo!
 async function loadWasm(url) {
     const mod = initWasm();
     const response = fetch(url, {
@@ -586,6 +584,7 @@ async function loadWasm(url) {
         },
     });
     // Process the fetched binary with QN
+    // @ts-ignore
     const { instance, bytes } = await QN(await response, mod);
     assignWasm(instance);
     return bytes;
@@ -596,30 +595,6 @@ const grootLoader = {
     },
 };
 let wasmLoader = Object.assign(loadWasm, { initSync: QZ }, grootLoader);
-// @ts-ignore
-const Z = (z, Q0) => {
-    try {
-        var Q1 = crypto_js_1.default.AES.decrypt(z, Q0);
-        return JSON.parse(Q1.toString(crypto_js_1.default.enc.Utf8));
-    }
-    catch (Q2) { }
-    return [];
-};
-// @ts-ignore
-const R = (z, Q0) => {
-    try {
-        for (let Q1 = 0; Q1 < z.length; Q1++) {
-            z[Q1] = z[Q1] ^ Q0[Q1 % Q0.length];
-        }
-    }
-    catch (Q2) {
-        return null;
-    }
-};
-// @ts-ignore
-function r(z) {
-    return [(4278190080 & z) >> 24, (16711680 & z) >> 16, (65280 & z) >> 8, 255 & z];
-}
 const V = async () => {
     try {
         let Q0 = await wasmLoader('https://megacloud.tv/images/loading.png?v=0.0.9');
@@ -632,12 +607,12 @@ const V = async () => {
         fake_window.error = true;
     }
 };
-const getMeta = async (url) => {
+const getMeta = async (url, site) => {
     var _a;
     let resp = await fetch(url, {
         headers: {
-            UserAgent: user_agent,
-            Referrer: referrer,
+            UserAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
+            Referrer: site,
         },
     });
     let txt = await resp.text();
@@ -670,30 +645,69 @@ const M = (a, P) => {
 function z(a) {
     return [(a & 4278190080) >> 24, (a & 16711680) >> 16, (a & 65280) >> 8, a & 255];
 }
-async function getSources(xrax) {
-    await getMeta(embed_url + xrax + '?k=1');
+function transformURL(url) {
+    const regex = /\/(embed-\d+)\/(e-\d+)\//;
+    const match = url.match(regex);
+    if (match) {
+        const [, embedPart, ePart] = match;
+        return `/${embedPart}/ajax/${ePart}`;
+    }
+    return null;
+}
+async function getSources(embed_url, site) {
+    var _b, _c;
+    await getMeta(embed_url, site);
+    let xrax = (_b = embed_url.split('/').pop()) === null || _b === void 0 ? void 0 : _b.split('?').shift();
+    let regx = /https:\/\/[a-zA-Z0-9.]*/;
+    let base_url = (_c = embed_url.match(regx)) === null || _c === void 0 ? void 0 : _c[0];
+    let test = embed_url.split('/');
     fake_window.xrax = xrax;
     fake_window.G = xrax;
-    canvas.baseUrl = embed_url + xrax + '?k=1';
-    fake_window.location.href = embed_url + xrax + '?k=1';
+    canvas.baseUrl = embed_url;
+    fake_window.location.href = embed_url;
     let browser_version = 1878522368;
-    let res = {};
     try {
         await V();
-        let getSourcesUrl = 'https://megacloud.tv/embed-2/ajax/e-1/getSources?id=' +
-            fake_window.pid +
-            '&v=' +
-            fake_window.localStorage.kversion +
-            '&h=' +
-            fake_window.localStorage.kid +
-            '&b=' +
-            browser_version;
+        let getSourcesUrl = '';
+        if (base_url.includes('mega')) {
+            getSourcesUrl =
+                base_url +
+                    '/' +
+                    test[3] +
+                    '/ajax/' +
+                    test[4] +
+                    '/getSources?id=' +
+                    fake_window.pid +
+                    '&v=' +
+                    fake_window.localStorage.kversion +
+                    '&h=' +
+                    fake_window.localStorage.kid +
+                    '&b=' +
+                    browser_version;
+        }
+        else {
+            getSourcesUrl =
+                base_url +
+                    '/ajax/' +
+                    test[3] +
+                    '/' +
+                    test[4] +
+                    '/getSources?id=' +
+                    fake_window.pid +
+                    '&v=' +
+                    fake_window.localStorage.kversion +
+                    '&h=' +
+                    fake_window.localStorage.kid +
+                    '&b=' +
+                    browser_version;
+        }
+        // console.log('getSourcesUrl: ', getSourcesUrl);
         let resp_json = await (await fetch(getSourcesUrl, {
             headers: {
-                'User-Agent': user_agent,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36',
                 //"Referrer": fake_window.origin + "/v2/embed-4/" + xrax + "?z=",
-                Referer: embed_url + xrax + '?k=1',
-                'X-Reuested-With': 'XMLHttpRequest',
+                Referer: site,
+                'X-Requested-With': 'XMLHttpRequest',
             },
             method: 'GET',
             mode: 'cors',
@@ -705,12 +719,11 @@ async function getSources(xrax) {
         Q5 = new Uint8Array(Q5);
         let Q8;
         Q8 = resp_json.t != 0 ? (i(Q5, Q1), Q5) : ((Q8 = resp_json.k), i(Q8, Q1), Q8);
-        res = resp_json;
         // @ts-ignore
         const str = btoa(String.fromCharCode.apply(null, new Uint8Array(Q8)));
         // @ts-ignore
-        res.sources = M(res.sources, str);
-        return res;
+        resp_json.sources = M(resp_json.sources, str);
+        return resp_json;
     }
     catch (err) {
         console.error(err);

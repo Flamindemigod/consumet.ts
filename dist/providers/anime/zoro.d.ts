@@ -1,4 +1,4 @@
-import { AnimeParser, ISearch, IAnimeInfo, IAnimeResult, ISource, IEpisodeServer, StreamingServers, IAnimeEpisode } from '../../models';
+import { AnimeParser, ISearch, IAnimeInfo, IAnimeResult, ISource, IEpisodeServer, StreamingServers, SubOrSub, IAnimeEpisode } from '../../models';
 declare class Zoro extends AnimeParser {
     readonly name = "Zoro";
     protected baseUrl: string;
@@ -106,8 +106,10 @@ declare class Zoro extends AnimeParser {
     /**
      *
      * @param episodeId Episode id
+     * @param server server type (default `VidCloud`) (optional)
+     * @param subOrDub sub or dub (default `SubOrSub.SUB`) (optional)
      */
-    fetchEpisodeSources: (episodeId: string, server?: StreamingServers) => Promise<ISource>;
+    fetchEpisodeSources: (episodeId: string, server?: StreamingServers, subOrDub?: SubOrSub) => Promise<ISource>;
     private verifyLoginState;
     private retrieveServerId;
     /**

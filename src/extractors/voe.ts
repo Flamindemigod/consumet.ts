@@ -19,7 +19,19 @@ class Voe extends VideoExtractor {
 
       const { data } = await this.client.get(pageUrl);
       const $$ = load(data);
-      const url = $$('body').html()!.split('prompt("Node", "')[1].split('");')[0];
+      const bodyHtml = $$('body').html() || '';
+      const url = bodyHtml.match(/'hls'\s*:\s*'([^']+)'/s)?.[1] || '';
+
+      const subtitleRegex =
+        /<track\s+kind="subtitles"\s+label="([^"]+)"\s+srclang="([^"]+)"\s+src="([^"]+)"/g;
+      let subtitles: ISubtitle[] = [];
+      let match;
+      while ((match = subtitleRegex.exec(bodyHtml)) !== null) {
+        subtitles.push({
+          lang: match[1],
+          url: new URL(match[3], videoUrl.origin).href,
+        });
+      }
 
       let thumbnailSrc: string = '';
       $$('script').each((i, el) => {
@@ -33,17 +45,17 @@ class Voe extends VideoExtractor {
           }
         }
       });
-      const subtitles: ISubtitle[] = [
-        {
+      if (thumbnailSrc) {
+        subtitles.push({
           lang: 'thumbnails',
           url: `${videoUrl.origin}${thumbnailSrc}`,
-        },
-      ];
+        });
+      }
 
       this.sources.push({
-        url: url,
+        url: atob(url),
         quality: 'default',
-        isM3U8: url.includes('.m3u8'),
+        isM3U8: atob(url).includes('.m3u8'),
       });
 
       return {

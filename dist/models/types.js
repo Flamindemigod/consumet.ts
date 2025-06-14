@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Topics = exports.Genres = exports.TvType = exports.SubOrSub = exports.MediaStatus = exports.StreamingServers = exports.MediaFormat = void 0;
+exports.Topics = exports.Genres = exports.TvType = exports.SubOrSub = exports.WatchListType = exports.MediaStatus = exports.StreamingServers = exports.MediaFormat = void 0;
 var MediaFormat;
 (function (MediaFormat) {
     MediaFormat["TV"] = "TV";
@@ -39,6 +39,8 @@ var StreamingServers;
     StreamingServers["VidHide"] = "vidhide";
     StreamingServers["VidMoly"] = "vidmoly";
     StreamingServers["Voe"] = "voe";
+    StreamingServers["MegaUp"] = "megaup";
+    StreamingServers["MegaCloud"] = "megacloud";
 })(StreamingServers || (exports.StreamingServers = StreamingServers = {}));
 var MediaStatus;
 (function (MediaStatus) {
@@ -49,6 +51,15 @@ var MediaStatus;
     MediaStatus["NOT_YET_AIRED"] = "Not yet aired";
     MediaStatus["UNKNOWN"] = "Unknown";
 })(MediaStatus || (exports.MediaStatus = MediaStatus = {}));
+var WatchListType;
+(function (WatchListType) {
+    WatchListType["WATCHING"] = "watching";
+    WatchListType["ONHOLD"] = "on-hold";
+    WatchListType["PLAN_TO_WATCH"] = "plan to watch";
+    WatchListType["DROPPED"] = "dropped";
+    WatchListType["COMPLETED"] = "completed";
+    WatchListType["NONE"] = "none";
+})(WatchListType || (exports.WatchListType = WatchListType = {}));
 var SubOrSub;
 (function (SubOrSub) {
     SubOrSub["SUB"] = "sub";
