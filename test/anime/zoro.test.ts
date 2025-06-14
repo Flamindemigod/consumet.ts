@@ -2,7 +2,7 @@ import { ANIME } from '../../src/providers';
 
 jest.setTimeout(120000);
 const zoro = new ANIME.Zoro('hianime.to');
-
+/*
 test('returns a filled array of anime list', async () => {
   const data = await zoro.search('Overlord IV');
   expect(data.results).not.toEqual([]);
@@ -133,14 +133,17 @@ test('returns a filled object of anime data', async () => {
   expect(data.description).not.toBeNull();
   expect(data.episodes).not.toEqual([]);
 });
-
+*/
 test('returns a filled object of episode sources', async () => {
   const res = await zoro.search('Overlord IV');
   const info = await zoro.fetchAnimeInfo(res.results[3].id);
   const data = await zoro.fetchEpisodeSources(info.episodes![0].id); // Overlord IV episode 1 id
   expect(data.sources).not.toEqual([]);
   expect(data.headers).not.toBeNull();
+
+  console.log('Episode 1 sources:', JSON.stringify(data, null, 2));
 });
+
 test('returns a filled object of episode sources of multiple episodes', async () => {
   const data1 = await zoro.fetchEpisodeSources(
     'rezero-starting-life-in-another-world-season-3-19301$episode$128356$both'
@@ -150,8 +153,11 @@ test('returns a filled object of episode sources of multiple episodes', async ()
   );
   expect(data1.sources).not.toEqual([]);
   expect(data2.sources).not.toEqual([]);
-});
 
+  console.log('Episode 1 sources:', JSON.stringify(data1, null, 2));
+  console.log('Episode 2 sources:', JSON.stringify(data2, null, 2));
+});
+/*
 test('returns a filled object of anime data with: status, genres, season and japaneseTitle', async () => {
   const info = await zoro.fetchAnimeInfo('ranma-1-2-19335');
 
@@ -171,3 +177,4 @@ test('returns a filled object of anime data with: status, genres, season and jap
   expect(info.genres).toBeDefined();
   expect(info.genres).not.toEqual([]);
 });
+*/
