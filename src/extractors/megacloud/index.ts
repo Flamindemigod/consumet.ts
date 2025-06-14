@@ -5,7 +5,7 @@ class MegaCloud extends VideoExtractor {
   serverName = 'MegaCloud';
   sources = [];
 
-  async extract(embedIframeURL: URL, referer: string = 'https://hianime.to') {
+  async extract(embedIframeURL: any, referer = 'https://hianime.to') {
     try {
       const extractedData = {
         subtitles: [],
@@ -25,6 +25,7 @@ class MegaCloud extends VideoExtractor {
       if (!sourceId) throw new Error('Unable to extract sourceId from embed URL');
 
       const megacloudUrl = `https://megacloud.blog/embed-2/v2/e-1/getSources?id=${sourceId}`;
+
       const { data: rawSourceData } = await axios.get(megacloudUrl);
 
       const bypassUrl = `https://bypass.lunaranime.ru/extract?url=${encodeURIComponent(megacloudUrl)}`;
