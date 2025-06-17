@@ -1,5 +1,6 @@
 import { VideoExtractor } from '../../models';
 import axios from 'axios';
+import CryptoJS from 'crypto-js';
 
 class MegaCloud extends VideoExtractor {
   serverName = 'MegaCloud';
@@ -23,19 +24,18 @@ class MegaCloud extends VideoExtractor {
       const match = /\/([^\/\?]+)\?/.exec(embedIframeURL.href);
       const sourceId = match?.[1];
       if (!sourceId) throw new Error('Unable to extract sourceId from embed URL');
-
+      const { data: key } = await axios.get(
+        'https://raw.githubusercontent.com/itzzzme/megacloud-keys/refs/heads/main/key.txt'
+      );
       const megacloudUrl = `https://megacloud.blog/embed-2/v2/e-1/getSources?id=${sourceId}`;
 
       const { data: rawSourceData } = await axios.get(megacloudUrl);
+      const encrypted = rawSourceData?.sources;
+      if (!encrypted) throw new Error('No data from src');
+      const decrypted = JSON.parse(CryptoJS.AES.decrypt(encrypted, key.trim()).toString(CryptoJS.enc.Utf8));
+      if (!decrypted && !Array.isArray(decrypted)) throw new Error('Decryption Failed');
 
-      const bypassUrl = `https://bypass.lunaranime.ru/extract?url=${encodeURIComponent(megacloudUrl)}`;
-      const { data: bypassData } = await axios.get(bypassUrl);
-
-      if (!bypassData?.sources || !Array.isArray(bypassData.sources) || bypassData.sources.length === 0) {
-        throw new Error('No sources found in bypass response');
-      }
-
-      extractedData.sources = bypassData.sources.map((s: any) => ({
+      extractedData.sources = decrypted.map((s: any) => ({
         url: s.file,
         isM3U8: s.type === 'hls',
         type: s.type,

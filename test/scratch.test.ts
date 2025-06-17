@@ -79,8 +79,7 @@ const TestCases: { desc: string; input: number; output: string }[] = [
 const EpisodeTestCases: { desc: string; input: string; output: string }[] = [
   {
     desc: 'Episode 2 of i may be a guild receptionist but ill solo any boss to clock out on time',
-    input:
-      'i-may-be-a-guild-receptionist-but-ill-solo-any-boss-to-clock-out-on-time-19441$episode$131985$dub',
+    input: 'rock-is-a-ladys-modesty-19570$episode$136106$sub',
     output: '',
   },
 ];
